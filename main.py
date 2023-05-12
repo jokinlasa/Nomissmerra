@@ -56,6 +56,7 @@ def haversine_np(latlon1, latlon2):
 def get_stn_latlonname(station_file):
     lst_stn = pd.read_csv(station_file)
     stn_names = lst_stn['network_name'].tolist()
+
     latstn = lst_stn['lat'].tolist()
     lonstn = lst_stn['lon'].tolist()
     lonstn = [360 + i if i < 0 else i for i in lonstn]
@@ -114,11 +115,15 @@ def clean_single_list(list_name):
     return val
 
 
+
+
+
+
 def main():
     # indir = '/data/wenshanw/merra2/rigb_input/'
-    indir = 'C:/Users/Jokin Lasa Escobales/Desktop/Data/Master/Thesis/Data/MERRA2_401.tavg3_3d/'
-
-    outdir = 'nomiss-merra'
+    indir2d = 'C:/Users/Jokin Lasa Escobales/Desktop/Data/Master/Thesis/Data/MERRA2_400_202008_2d/'
+    indir3d = 'C:/Users/Jokin Lasa Escobales/Desktop/Data/Master/Thesis/Data/MERRA2_400_202008_3d/'
+    outdir = 'nomiss-merra4'
 
     nplev = 72
 
@@ -126,16 +131,20 @@ def main():
     pin, tin, qin = ([None] * (nplev + 1) for _ in range(3))
 
     stn_names, lat_lon_stn = get_stn_latlonname('station_radiation.txt')
-    print(stn_names)
-    print(lat_lon_stn)
-    for infile in glob.iglob(indir + '*.nc4'):
 
-        print("1")
+    print(stn_names)
+
+    for infile in glob.iglob(indir3d + '*.nc4'):
+
+        print(infile)
 
         x_coord = 0
         lat_lon_var = get_ds_latlon(infile)
         stn_new = haversine_np(lat_lon_stn, lat_lon_var)
+
         for item in stn_new:
+            print(item)
+
             ds = xr.open_dataset(infile)
             y_coord = 0
             pout_final, tout_final, qout_final, o3_out_final = ([] for _ in range(4))
@@ -174,17 +183,17 @@ def main():
 
                 # Temperature
                 tin[:nplev] = clean_multiple_list(ds_temp['T'].values.tolist())
-                ta_merra = clean_single_list(ds_temp['TLML'].values.tolist())
-                if not np.isnan(ta_merra):
-                    tin[-1] = ta_merra
+             #   ta_merra = clean_single_list(ds_temp['TLML'].values.tolist())
+             #   if not np.isnan(ta_merra):
+              #      tin[-1] = ta_merra
 
-                ts_merra = ta_merra
+                ts_merra = 0
 
                 # Water vapor mixing ratio
                 qin[:nplev] = clean_multiple_list(ds_temp['QV'].values.tolist())
-                qs_merra = clean_single_list(ds_temp['QLML'].values.tolist())
-                if not np.isnan(qs_merra):
-                    qin[-1] = qs_merra
+            #    qs_merra = clean_single_list(ds_temp['QLML'].values.tolist())
+              #  if not np.isnan(qs_merra):
+                # qin[-1] = qs_merra
 
                 # Ozone
                 o3_merra = clean_multiple_list(ds_temp['O3'].values.tolist())
@@ -232,14 +241,17 @@ def main():
             ds = xr.Dataset({'plev': (('time', 'PLEV'), pout_final), 't': (('time', 'PLEV'), tout_final), 'q': (('time', 'PLEV'), qout_final),
                              'o3': (('time', 'PLEV'), o3_out_final), 'ts': ts_merra, 'ta': tin[-1], 'ps': ps_merra,
                              'aod_count': aod_count})
+           # print(ds.info())
 
             # Write to netCDF file
             if not os.path.exists(outdir):
                 os.makedirs(outdir)
             basename = os.path.basename(infile)
-            outfile = outdir + '/' + stn_names[x_coord] + '.' + basename[-15:-7] + '.nc'
-            print("this is the file: " + outfile)
+            outfile = outdir + '/' + stn_names[x_coord] + '.' + basename[-15:-7] + 'nc4'
+
             ds.to_netcdf(outfile)
+
+
 
             x_coord += 1
 

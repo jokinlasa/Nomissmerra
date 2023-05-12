@@ -181,8 +181,8 @@ def takeFiles(path):
 
 def main():
     nplev = 72
-    indir2d = './MERRA2_400_202008_2d/'
-    indir3d = './MERRA2_400_202008_3d/'
+    indir2d = './my-merra-2013-2d/'
+    indir3d = './my-merra-2013-3d/'
     outdir = 'my-nomiss-merra-new'
 
     global tin, qin, o3_merra
@@ -211,9 +211,9 @@ def main():
 
         for item in stn_new:
             pout_final, tout_final, qout_final, o3_out_final = ([] for _ in range(4))
-            print(file2d)
+            #  print(file2d)
             ds2d = xr.open_dataset(file2d)
-            print(list3d[numfiles])
+            #  print(list3d[numfiles])
             ds3d = xr.open_dataset(file3d)
 
             sub2d = subset_dataset_for_dimension(ds2d, stn_new, x_coord)
@@ -266,21 +266,30 @@ def main():
                 qout_final.append(qout)
                 o3_out_final.append(o3_out)
 
-             #   print(pout_final, tout_final, qout_final, o3_out_final)
+            #   print(pout_final, tout_final, qout_final, o3_out_final)
 
             ds = xr.Dataset({'plev': (('time', 'PLEV'), pout_final), 't': (('time', 'PLEV'), tout_final),
                              'q': (('time', 'PLEV'), qout_final),
                              'o3': (('time', 'PLEV'), o3_out_final), 'ts': ts_merra, 'ta': tin[-1], 'ps': ps_merra,
                              'aod_count': aod_count})
 
-            print(ds)
-                # Write to netCDF file
+            dw = ds["plev"]
+            print(dw)
+            #  print(ds.info())
+            # Write to netCDF file
             if not os.path.exists(outdir):
                 os.makedirs(outdir)
             basename = os.path.basename(file2d)
-            outfile = outdir + '/' + stn_names[x_coord] + '.' + basename[-15:-7] + 'nc4'
+            outfile = outdir + '/' + stn_names[x_coord] + '-' + basename[-15:-7] + 'nc4'
 
             ds.to_netcdf(outfile)
+
+            dat = xr.open_dataset(outfile)
+
+            dk = dat["plev"]
+
+            print(outfile)
+            print(dk)
 
             x_coord += 1
         numfiles += 1
