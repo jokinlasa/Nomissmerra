@@ -187,8 +187,8 @@ def takeFiles(path):
 
 def main():
     nplev = 72
-    indir2d = './my-merra-2013-2d/'
-    indir3d = './my-merra-2013-3d/'
+    indir2d = './MERRA2_400_202008_2d/'
+    indir3d = './MERRA2_400_202008_3d/'
 
     nplev = 72
 
