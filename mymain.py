@@ -153,6 +153,7 @@ def take_data_3d_files(tin, qin, pin, ds_temp, nplev):
     plev = [i / 100 for i in plev]
     pin[:nplev] = plev[:]
 
+#PS MERRA ONLY HAS ONE VALUE THAT IS NOT NAN --> SHOULD BE LIKE THAT??????
     ps_merra = ds_temp['PS'].values.tolist()
     ps_merra = clean_single_list(ps_merra)
     ps_merra = ps_merra / 100
@@ -161,8 +162,13 @@ def take_data_3d_files(tin, qin, pin, ds_temp, nplev):
 
     # Temperature
     tin[:nplev] = clean_multiple_list(ds_temp['T'].values.tolist())
-
-    ts_merra = 0
+    #THERE IS NO SUCH A 'TLML' VARIABLE IN THE 3D FILE
+    ta_merra = clean_single_list(ds_temp['TLML'].values.tolist())
+    if not np.isnan(ta_merra):
+       tin[-1] = ta_merra
+    #TS IS EMPTY BECAUSE TLML DOESNT EXIST --> FROM WHERE SHOULD I TAKE THE TS DATA???
+    ts_merra = ta_merra
+   ####################################
 
     # Water vapor mixing ratio
     qin[:nplev] = clean_multiple_list(ds_temp['QV'].values.tolist())
@@ -183,12 +189,12 @@ def main():
     nplev = 72
     indir2d = './my-merra-2013-2d/'
     indir3d = './my-merra-2013-3d/'
-    outdir = 'my-nomiss-merra-new'
-
-    global tin, qin, o3_merra
-    pin, tin, qin = ([None] * (nplev + 1) for _ in range(3))
 
     nplev = 72
+
+    global tin, qin, o3_merra
+    #TIN AND QIN ARE NO CREATED --> WHY???? --> THATS WHY TIN IS EMPTY AND TA DOESNT HAVE DATA INSIDE
+    pin, tin, qin = ([None] * (nplev + 1) for _ in range(3))
 
     stn_names, lat_lon_stn = get_stn_latlonname('station_radiation.txt')
 
@@ -200,6 +206,7 @@ def main():
     numfiles = 0
 
     for file in list2d:
+        date = file[27:-8]
         file2d = indir2d + file
         file3d = indir3d + list3d[numfiles]
         ds = xr.open_dataset(file2d)
@@ -268,19 +275,34 @@ def main():
 
             #   print(pout_final, tout_final, qout_final, o3_out_final)
 
-            ds = xr.Dataset({'plev': (('time', 'PLEV'), pout_final), 't': (('time', 'PLEV'), tout_final),
+            print(file2d)
+            basename = os.path.basename(file2d)
+            date = basename[-16:-8]
+            time = pd.to_datetime([date + str(i).zfill(2) for i in [1, 4, 7, 10, 13, 16, 19, 22]], format='%Y%m%d%H')
+
+            ds = xr.Dataset({'plev': (('time', 'PLEV'), pout_final),
+                             't': (('time', 'PLEV'), tout_final),
                              'q': (('time', 'PLEV'), qout_final),
-                             'o3': (('time', 'PLEV'), o3_out_final), 'ts': ts_merra, 'ta': tin[-1], 'ps': ps_merra,
-                             'aod_count': aod_count})
+                             'o3': (('time', 'PLEV'), o3_out_final),
+                             'ts': ts_merra,
+                             'ta': tin[-1],
+                             'ps': ps_merra,
+                             'aod_count': aod_count},
+                            coords=dict(
+                                time=("time", time),
+                                PLEV=("PLEV", np.arange(1, 73)),
+                            )
+                            )
 
             dw = ds["plev"]
             print(dw)
             #  print(ds.info())
             # Write to netCDF file
-            if not os.path.exists(outdir):
-                os.makedirs(outdir)
+            if not os.path.exists('directories-per-location-time/' + stn_names[x_coord]):
+                os.makedirs('directories-per-location-time/' + stn_names[x_coord])
             basename = os.path.basename(file2d)
-            outfile = outdir + '/' + stn_names[x_coord] + '-' + basename[-15:-7] + 'nc4'
+            outfile = 'directories-per-location-time/' + stn_names[x_coord] + '/' + stn_names[x_coord] + '-' + basename[
+                                                                                                               -15:-7] + 'nc4'
 
             ds.to_netcdf(outfile)
 
