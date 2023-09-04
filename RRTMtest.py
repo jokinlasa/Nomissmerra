@@ -13,6 +13,7 @@ import xarray as xr
 import sunposition
 
 import warnings
+
 warnings.filterwarnings('ignore')
 
 '''
@@ -46,8 +47,8 @@ def make_column(lev=None, ps=1013, tmp=None, ts=None):
 
 def main():
     print("hola")
-    indir = "my-nomiss-merra-new/"
-    outdir = "rrtm-merra/"
+    indir = "nomiss-merra-result-summer2013/"
+    outdir = "rrtm-result/"
     if not os.path.exists(outdir):
         os.makedirs(outdir)
 
@@ -82,7 +83,7 @@ def main():
     hours_merra = [1, 4, 7, 10, 13, 16, 19, 22]
     hours_24 = list(range(24))
 
-    cleardays = pd.read_csv('cleardays.csv')
+    cleardays = pd.read_csv('2013-summer-sunnydays.csv')
 
     # main function
     for i in range(nstn):
@@ -100,15 +101,25 @@ def main():
         lw_up_complete = []
         time_op = []
 
-        flname = indir + stn + '.' + 'merra2.inst3.asm.1991-2018' + '.nc'
+        #checking the station
+        print(stn)
 
         clr_dates = cleardays.loc[cleardays['network_name'] == stn, 'date']
+        #checking the dates
+        print(clr_dates)
+        #checking the length
+        print(len(clr_dates))
+        '''clr_dates_stn = cleardays[clr_dates]
+        print(clr_dates_stn)'''
 
         for date in clr_dates:
+            print(date)
             sw_dn = []
             sw_up = []
             lw_dn = []
             lw_up = []
+
+            flname = indir + stn + '/' + stn + '-' + str(date) + '.nc'
 
             '''flname = indir + stn + '.' + str(date) + '.nc'
             if not os.path.isfile(flname):
@@ -125,6 +136,7 @@ def main():
             o3_mmr = fin['o3'].values
             o3_vmr = climlab.utils.thermo.mmr_to_vmr(o3_mmr, gas='O3')
 
+            #aod_count is not a variable inside the no_miss merra files --> ERROR HERE
             aod_count = int(fin['aod_count'].values[0])
 
             # knob
@@ -170,37 +182,41 @@ def main():
             for hr in range(24):
                 time_op.append(datetime.strptime(str(date), "%Y%m%d") + timedelta(hours=hr, minutes=30))
 
-        # Combine fsds for multiple days into single list
-        sw_dn_complete = [item for sublist in sw_dn_complete for item in sublist]
-        sw_up_complete = [item for sublist in sw_up_complete for item in sublist]
-        lw_dn_complete = [item for sublist in lw_dn_complete for item in sublist]
-        lw_up_complete = [item for sublist in lw_up_complete for item in sublist]
+       #If the station doesn't have any dates the file sholdn't be created
 
-        # Get seconds since 1970
-        time_op = [(i - datetime(1970, 1, 1)).total_seconds() for i in time_op]
+        if len(clr_dates)>0:
+            # Combine fsds for multiple days into single list
+            sw_dn_complete = [item for sublist in sw_dn_complete for item in sublist]
+            sw_up_complete = [item for sublist in sw_up_complete for item in sublist]
+            lw_dn_complete = [item for sublist in lw_dn_complete for item in sublist]
+            lw_up_complete = [item for sublist in lw_up_complete for item in sublist]
 
-        if sw_dn_complete:  # Write data
-            ds = xr.Dataset()
+            # Get seconds since 1970
+            time_op = [(i - datetime(1970, 1, 1)).total_seconds() for i in time_op]
 
-            ds['fsds'] = 'time', sw_dn_complete
-            ds['fsus'] = 'time', sw_up_complete
-            ds['flds'] = 'time', lw_dn_complete
-            ds['flus'] = 'time', lw_up_complete
-            ds['time'] = 'time', time_op
+            if sw_dn_complete:  # Write data
+                ds = xr.Dataset()
 
-            ds['fsds'].attrs = {"_FillValue": fillvalue_float, "units": 'watt meter-2',
-                                "long_name": 'RRTM simulated shortwave downwelling radiation at surface'}
-            ds['fsus'].attrs = {"_FillValue": fillvalue_float, "units": 'watt meter-2',
-                                "long_name": 'RRTM simulated shortwave upwelling radiation at surface'}
-            ds['flds'].attrs = {"_FillValue": fillvalue_float, "units": 'watt meter-2',
-                                "long_name": 'RRTM simulated longwave downwelling radiation at surface'}
-            ds['flus'].attrs = {"_FillValue": fillvalue_float, "units": 'watt meter-2',
-                                "long_name": 'RRTM simulated longwave upwelling radiation at surface'}
-            ds['time'].attrs = {"_FillValue": fillvalue_float, "units": 'seconds since 1970-01-01 00:00:00',
-                                "calendar": 'standard'}
+                ds['fsds'] = 'time', sw_dn_complete
+                ds['fsus'] = 'time', sw_up_complete
+                ds['flds'] = 'time', lw_dn_complete
+                ds['flus'] = 'time', lw_up_complete
+                ds['time'] = 'time', time_op
 
-            ds.to_netcdf(fout)
-            print(fout)
+                ds['fsds'].attrs = {"_FillValue": fillvalue_float, "units": 'watt meter-2',
+                                    "long_name": 'RRTM simulated shortwave downwelling radiation at surface'}
+                ds['fsus'].attrs = {"_FillValue": fillvalue_float, "units": 'watt meter-2',
+                                    "long_name": 'RRTM simulated shortwave upwelling radiation at surface'}
+                ds['flds'].attrs = {"_FillValue": fillvalue_float, "units": 'watt meter-2',
+                                    "long_name": 'RRTM simulated longwave downwelling radiation at surface'}
+                ds['flus'].attrs = {"_FillValue": fillvalue_float, "units": 'watt meter-2',
+                                    "long_name": 'RRTM simulated longwave upwelling radiation at surface'}
+                ds['time'].attrs = {"_FillValue": fillvalue_float, "units": 'seconds since 1970-01-01 00:00:00',
+                                    "calendar": 'standard'}
+
+                ds.to_netcdf(fout)
+
+                print(fout)
 
 
 if __name__ == '__main__':
