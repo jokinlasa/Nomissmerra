@@ -175,6 +175,10 @@ for numfiles, file in enumerate(list2d):
         #     if (pin[-1] - 100) < press < pin[-1]:
         #         aod_count += 1
 
+        greater = (pin.loc[dict(lev=slice(0,72))] > (pin.isel(lev=-1) - 100))
+        lower = (pin.loc[dict(lev=slice(0,72))] < pin.isel(lev=-1))
+        aod_count = (greater & lower).sum(dim='lev') 
+
         # here there some interpolation being done, but first the log_interpolation
         # function doesn't make sense, then there should not be gaps in
         # the model output
@@ -191,6 +195,7 @@ for numfiles, file in enumerate(list2d):
             ta_merra.rename('ta'),
             ts_merra.rename('ts'),  # there must be a difference between the two
             ps_merra.rename('ps'),
+            aod_count.rename('aod_count'),
         ))
 
         #  print(ds.info())
