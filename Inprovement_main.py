@@ -37,8 +37,8 @@ def log_interpolation(var_name, **kwargs):
 
 
 nplev = 72  # number of levels
-indir2d = './my-merra-2013-summer-2d/'
-indir3d = './my-merra-2013-summer-3d/'
+indir2d = './MERRA2_400_202008_2d/'
+indir3d = './MERRA2_400_202008_3d/'
 
 station_info = pd.read_csv('station_radiation.txt')
 stn_names = station_info.iloc[:, 1].values
@@ -49,9 +49,9 @@ list2d = os.listdir(indir2d)
 list3d = os.listdir(indir3d)
 
 for numfiles, file in enumerate(list2d):
-    # break
-    # #%%
-    # file = 'MERRA2_400.inst1_2d_lfo_Nx.20200801.nc4.nc4'
+    break
+    #%%
+    file = 'MERRA2_400.inst1_2d_lfo_Nx.20200801.nc4.nc4'
     date = file[27:-8]
     file2d = indir2d + file
     file3d = indir3d + list3d[numfiles]
