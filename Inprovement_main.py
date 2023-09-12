@@ -37,7 +37,7 @@ def log_interpolation(var_name, **kwargs):
 
 
 nplev = 72  # number of levels
-indir3d = './my-merra-2013-summer-3d/'
+indir2d = './my-merra-2013-summer-2d/'
 indir3d = './my-merra-2013-summer-3d/'
 
 # bav folders
