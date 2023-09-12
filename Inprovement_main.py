@@ -49,9 +49,9 @@ list2d = os.listdir(indir2d)
 list3d = os.listdir(indir3d)
 
 for numfiles, file in enumerate(list2d):
-    break
-    #%%
-    file = 'MERRA2_400.inst1_2d_lfo_Nx.20200801.nc4.nc4'
+    # break
+    # #%%
+    # file = 'MERRA2_400.inst1_2d_lfo_Nx.20200801.nc4.nc4'
     date = file[27:-8]
     file2d = indir2d + file
     file3d = indir3d + list3d[numfiles]
@@ -118,8 +118,8 @@ for numfiles, file in enumerate(list2d):
         #                 pin[-1] = ps_merra
         # was doing.
 
-        ps_merra = ps_merra.expand_dims(dim={"lev": [73.]}).rename('PL')
-        pin = xr.merge((pin, ps_merra))['PL']
+        # ps_merra = ps_merra.expand_dims(dim={"lev": [73.]}).rename('PL')
+        # pin = xr.merge((pin, ps_merra))['PL']
 
         # plt.figure()
         # pin.isel(lev=-1).plot(marker='o')
@@ -135,12 +135,12 @@ for numfiles, file in enumerate(list2d):
         # We solve this by interpolating the 3-hourly 3d data into hourly data
 
         # surface temperature
-        ta_merra = ds_day_site['TLML']
+        ta_merra = tin.isel(lev=-1)
         # adding ta_merra as extra layer in tin (tin[-1] = ta_merra)
-        ta_merra = ta_merra.expand_dims(dim={"lev": [73.]}).rename('T')
-        tin = xr.merge((tin, ta_merra))['T']
+        # ta_merra = ta_merra.expand_dims(dim={"lev": [73.]}).rename('T')
+        # tin = xr.merge((tin, ta_merra))['T']
 
-        ts_merra = ta_merra.copy()  # here making a copy of ta_merra, no idea why
+        ts_merra = ta_merra  # here making a copy of ta_merra, no idea why
         # I'm assuming that since we are on ice, surface temp cannot be over melting point
         ts_merra = xr.where(ts_merra > 273.15, 273.15, ts_merra)
 
@@ -156,7 +156,7 @@ for numfiles, file in enumerate(list2d):
         pressureSafetyMeasure = 5
 
         for lev in range(1, 73):
-            msk = pin.loc[dict(lev=lev)] > (pin.isel(lev=-1) - pressureSafetyMeasure)
+            msk = pin.loc[dict(lev=lev)] > (ps_merra - pressureSafetyMeasure)
             tin.loc[dict(lev=lev)] = tin.loc[dict(lev=lev)].where(~msk)
             qin.loc[dict(lev=lev)] = qin.loc[dict(lev=lev)].where(~msk)
             pin.loc[dict(lev=lev)] = pin.loc[dict(lev=lev)].where(~msk)
@@ -175,8 +175,8 @@ for numfiles, file in enumerate(list2d):
         #     if (pin[-1] - 100) < press < pin[-1]:
         #         aod_count += 1
 
-        greater = (pin.loc[dict(lev=slice(0,72))] > (pin.isel(lev=-1) - 100))
-        lower = (pin.loc[dict(lev=slice(0,72))] < pin.isel(lev=-1))
+        greater = (pin.loc[dict(lev=slice(0,72))] > (ps_merra - 100))
+        lower = (pin.loc[dict(lev=slice(0,72))] < ps_merra)
         aod_count = (greater & lower).sum(dim='lev') 
 
         # here there some interpolation being done, but first the log_interpolation

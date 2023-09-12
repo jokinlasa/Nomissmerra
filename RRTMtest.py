@@ -122,12 +122,12 @@ def main():
             fin = xr.open_dataset(flname)
             fin = fin.sel(time=str(date))
 
-            tmp = fin['t'].values[:-1, :]
-            ts = fin['ts'].values[-1, :]
-            plev = fin['plev'].values[:-1, :]
-            ps = fin['ps'].values[-1, :]
-            h2o_q = fin['q'].values[:-1, :]
-            o3_mmr = fin['o3'].values[:-1, :]
+            tmp = fin['t'].values
+            ts = fin['ts'].values
+            plev = fin['plev'].values
+            ps = fin['ps'].values
+            h2o_q = fin['q'].values
+            o3_mmr = fin['o3'].values
             o3_vmr = climlab.utils.thermo.mmr_to_vmr(o3_mmr, gas='O3')
 
             aod_count = int(fin['aod_count'].values[0])
