@@ -37,6 +37,10 @@ def log_interpolation(var_name, **kwargs):
 
 
 nplev = 72  # number of levels
+indir3d = './my-merra-2013-summer-3d/'
+indir3d = './my-merra-2013-summer-3d/'
+
+# bav folders
 indir2d = './MERRA2_400_202008_2d/'
 indir3d = './MERRA2_400_202008_3d/'
 
@@ -117,7 +121,9 @@ for numfiles, file in enumerate(list2d):
         # That is what
         #                 pin[-1] = ps_merra
         # was doing.
-
+        
+        # no need to expand the "lev" dimension, surface values are saved
+        # separately in a single-layer variable
         # ps_merra = ps_merra.expand_dims(dim={"lev": [73.]}).rename('PL')
         # pin = xr.merge((pin, ps_merra))['PL']
 
@@ -136,7 +142,8 @@ for numfiles, file in enumerate(list2d):
 
         # surface temperature
         ta_merra = tin.isel(lev=-1)
-        # adding ta_merra as extra layer in tin (tin[-1] = ta_merra)
+        # no need to expand the "lev" dimension, surface values are saved
+        # separately in a single-layer variable
         # ta_merra = ta_merra.expand_dims(dim={"lev": [73.]}).rename('T')
         # tin = xr.merge((tin, ta_merra))['T']
 

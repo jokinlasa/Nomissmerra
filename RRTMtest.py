@@ -81,7 +81,7 @@ def main():
     hours_merra = [1, 4, 7, 10, 13, 16, 19, 22]
     hours_24 = list(range(24))
 
-    # cleardays = pd.read_csv('2013-summer-sunnydays.csv')
+    cleardays = pd.read_csv('2013-summer-sunnydays.csv')
 
     # main function
     for i in range(nstn):
@@ -104,8 +104,18 @@ def main():
 
         #checking the station
         print(stn)
+        
+        # I am wondering if that is needed for now. Maybe we could try to run
+        # RRTM on all days, so we can deal later with the clear days.
+        clr_dates = cleardays.loc[cleardays['network_name'] == stn, 'date']
+        #checking the dates
+        print(clr_dates)
+        #checking the length
+        print(len(clr_dates))
+        '''clr_dates_stn = cleardays[clr_dates]
+        print(clr_dates_stn)'''
 
-        clr_dates = [20200801]
+        # clr_dates = [20200801]
         for date in clr_dates:
             print(date)
             sw_dn = []
@@ -114,7 +124,7 @@ def main():
             lw_up = []
 
             flname = indir + stn + '/' + stn + '-' + str(date) + '.nc'
-    
+
             '''flname = indir + stn + '.' + str(date) + '.nc'
             if not os.path.isfile(flname):
                 continue'''
@@ -182,10 +192,10 @@ def main():
             sw_up_complete.append(sw_up_24)
             lw_dn_complete.append(lw_dn_24)
             lw_up_complete.append(lw_up_24)
-    
+
             for hr in range(24):
                 time_op.append(datetime.strptime(str(date), "%Y%m%d") + timedelta(hours=hr, minutes=30))
-    
+
        #If the station doesn't have any dates the file sholdn't be created
 
         if len(clr_dates)>0:
@@ -200,7 +210,7 @@ def main():
 
             if sw_dn_complete:  # Write data
                 ds = xr.Dataset()
-            
+
                 ds['fsds'] = 'time', sw_dn_complete
                 ds['fsus'] = 'time', sw_up_complete
                 ds['flds'] = 'time', lw_dn_complete
